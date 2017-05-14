@@ -260,7 +260,7 @@ namespace Tetris
         {
             uint res = 0;
 
-            for (int row = 19; row >= 0; row--)
+            for (int row = BOARD_HEIGHT - 1; row >= 0; row--)
             {
                 if ((_board[row] & FULL_LINE_MASK) == FULL_LINE_MASK)
                 {
