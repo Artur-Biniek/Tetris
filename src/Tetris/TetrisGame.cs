@@ -32,16 +32,22 @@ namespace Tetris
              0, 0, -1, 0
         };
 
-        const uint FULL_LINE_MASK = 0x7FE00000;
-        const uint COPY_LINE_MASK = 0xFFF00000;
+        const int BOARD_HORIZONTAL_SHIFT = 11;
+        const int BOARD_VERTICAL_SHIFT = 6;
+
+        const uint FULL_LINE_MASK = 0x03FF;
+        const uint COPY_LINE_MASK = ~(FULL_LINE_MASK << BOARD_HORIZONTAL_SHIFT);
 
         const uint REPEAT_RATE_SLOW = 200;
         const uint REPEAT_RATE_FAST = 100;
         const uint REPEAT_RATE_RAPID = 40;
 
+        const int BOARD_WIDTH = 10;
+        const int BOARD_HEIGHT = 20;
+
         private readonly Random _rnd = new Random();
 
-        uint[] _board = new uint[32];
+        uint[] _board = new uint[BOARD_HEIGHT];
 
         int _curRow, _curCol;
         int _curDelay = 1000;
@@ -86,6 +92,36 @@ namespace Tetris
             _playing = true;
         }
 
+        private void createBoard()
+        {
+            for (int i = 0; i < 32; i += 1)
+            {
+                if (i < BOARD_HEIGHT)
+                {
+                    _board[i] = 0;
+                }
+
+                _screenMemory[i] = 0xFFFFFFFF;
+            }
+        }
+
+        private void generateTetromino()
+        {
+            _curBlock = _nextBlock;
+            _curRotation = _nextRotation;
+
+            _nextBlock = _rnd.Next(7) * 4;
+            _nextRotation = _rnd.Next(4);
+
+            _curRow = START_LOCATION_DATA[_curBlock + _curRotation];
+            _curCol = 3;
+
+            if (!canMoveBlock(_curCol, _curRow, _curRotation))
+            {
+                _playing = false;
+            }
+        }
+
         public void Run()
         {
             var keystate = _getKeys();
@@ -102,6 +138,7 @@ namespace Tetris
             bool moveLeft = false, moveRight = false, rotate = false, moveDown = false;
             int ncol = _curCol, nrow = _curRow, nrot = _curRotation;
 
+            #region Key Handling
             if ((keystate & KEY_LEFT) != 0)
             {
                 if ((_oldKeys & KEY_LEFT) == 0)
@@ -169,6 +206,7 @@ namespace Tetris
                     }
                 }
             }
+            #endregion
 
             _oldKeys = keystate;
 
@@ -242,34 +280,35 @@ namespace Tetris
         private void mergeBlock()
         {
             uint mask = 0xF000;
-            int offset = 16;
+            int offset = 6;
+            int shft = 0;
 
             uint mem = 0u;
             uint strip = 0u;
             uint block = BLOCKS_DATA[_curBlock + _curRotation];
             int i = 0;
 
-            for (i = _curRow; i < _curRow + 4; i++)
+            for (i = _curRow; i < _curRow + 4; i++, mask >>= 4, offset -= 4)
             {
+                if (i < 0 || i >= BOARD_HEIGHT) continue;
+
                 mem = _board[i];
 
-                strip = (uint)(block & mask) << offset;
+                strip = (uint)(block & mask);
+                shft = offset + _curCol;
 
-                if (_curCol < 0)
+                if (shft < 0)
                 {
-                    strip <<= (-_curCol);
+                    strip <<= (-shft);
                 }
                 else
                 {
-                    strip >>= _curCol;
+                    strip >>= shft;
                 }
 
                 mem |= strip;
 
                 _board[i] = mem;
-
-                mask >>= 4;
-                offset += 4;
             }
         }
 
@@ -288,13 +327,13 @@ namespace Tetris
                         x = c + dcol;
                         y = r + drow;
                         if (x < 0) return false;
-                        if (x > 11) return false;
+                        if (x >= BOARD_WIDTH) return false;
                         if (y < 0) return false;
-                        if (y > 20) return false;
+                        if (y >= BOARD_HEIGHT) return false;
 
                         var line = _board[y];
 
-                        var bit = 31 - x;
+                        var bit = BOARD_WIDTH - 1 - x;
 
                         if ((line & (1 << bit)) != 0) return false;
                     }
@@ -306,92 +345,52 @@ namespace Tetris
             return true;
         }
 
-        private void createBoard()
-        {
-            for (int i = 0; i < 32; i += 1)
-            {
-                _screenMemory[i] = 1;
-            }
-
-            for (int i = 0; i < 20; i += 1)
-            {
-                _board[i] = 0x80100000;
-            }
-
-            _board[20] = 0xFFF00000;
-        }
-
         private void blitBlock(int row, int col, int rot)
         {
             uint mask = 0xF000;
-            int offset = 16;
+            int offset = 6;
 
             uint mem = 0u;
             uint strip = 0u;
             uint block = BLOCKS_DATA[_curBlock + rot];
-            //uint next = BLOCKS_DATA[NextBlock + NextRotation];
+
             int i = 0;
+            int shft = 0;
 
             for (i = 0; i < row; i++)
             {
-                _screenMemory[i] = _board[i];
+                var maskedLine = _screenMemory[i + BOARD_VERTICAL_SHIFT] & COPY_LINE_MASK;
+                _screenMemory[i + BOARD_VERTICAL_SHIFT] = maskedLine | (_board[i] << BOARD_HORIZONTAL_SHIFT);
             }
 
-            for (i = row; i < row + 4; i++, mask >>= 4, offset += 4)
+            for (i = row; i < row + 4; i++, mask >>= 4, offset -= 4)
             {
-                if (i < 0) continue;
+                if (i < 0 || i >= BOARD_HEIGHT) continue;
 
                 mem = _board[i];
 
-                strip = (uint)(block & mask) << offset;
+                strip = (uint)(block & mask);
+                shft = offset + col;
 
-                if (col < 0)
+                if (shft < 0)
                 {
-                    strip <<= (-col);
+                    strip <<= (-shft);
                 }
                 else
                 {
-                    strip >>= col;
+                    strip >>= shft;
                 }
 
                 mem |= strip;
 
-                _screenMemory[i] = mem;
-
-
-                /*
-                mem = _screenMemory[i - row + 1];
-
-                strip = (uint)(next & mask) << offset;
-
-                strip >>= 14;
-
-                mem |= strip;
-
-                _screenMemory[i - row + 1] = mem;
-                */
+                var maskedLine = _screenMemory[i + BOARD_VERTICAL_SHIFT] & COPY_LINE_MASK;
+                _screenMemory[i + BOARD_VERTICAL_SHIFT] = maskedLine | (mem << BOARD_HORIZONTAL_SHIFT);
             }
 
-            for (i = row + 4; i < 32; i++)
+            for (i = row + 4; i < BOARD_HEIGHT; i++)
             {
-                _screenMemory[i] = _board[i];
-            }
-        }
-
-        private void generateTetromino()
-        {
-            _curBlock = _nextBlock;
-            _curRotation = _nextRotation;
-
-            _nextBlock = _rnd.Next(7) * 4;
-            _nextRotation = _rnd.Next(4);
-
-            _curRow = START_LOCATION_DATA[_curBlock + _curRotation];
-            _curCol = 4;
-
-            if (!canMoveBlock(_curCol, _curRow, _curRotation))
-            {
-                _playing = false;
+                var maskedLine = _screenMemory[i + BOARD_VERTICAL_SHIFT] & COPY_LINE_MASK;
+                _screenMemory[i + BOARD_VERTICAL_SHIFT] = maskedLine | (_board[i] << BOARD_HORIZONTAL_SHIFT);
             }
         }
     }
