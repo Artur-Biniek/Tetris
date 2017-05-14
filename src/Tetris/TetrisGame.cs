@@ -83,8 +83,6 @@ namespace Tetris
             createBoard();
             generateTetromino();
 
-            blitBlock(_curRow, _curCol, _curRotation);
-
             _playing = true;
         }
 
