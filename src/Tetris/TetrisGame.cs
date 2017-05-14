@@ -99,10 +99,11 @@ namespace Tetris
                 if (i < BOARD_HEIGHT)
                 {
                     _board[i] = 0;
-                }
-
-                _screenMemory[i] = 0xFFFFFFFF;
+                    _screenMemory[i + BOARD_VERTICAL_SHIFT] = 0x00200400;
+                }                
             }
+
+            _screenMemory[BOARD_VERTICAL_SHIFT + BOARD_HEIGHT] = 0x003FFC00;
         }
 
         private void generateTetromino()
