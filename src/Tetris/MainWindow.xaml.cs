@@ -12,12 +12,12 @@ namespace Tetris
     /// </summary>
     public partial class MainWindow : Window
     {
-        const int PIXEL_SIZE = 15;
+        const int PIXEL_SIZE = 12;
 
         const int WIDTH = 32;
         const int HEIGHT = 32;
 
-        DispatcherTimer _dispatcherTimer = new System.Windows.Threading.DispatcherTimer();
+        DispatcherTimer _dispatcherTimer = new DispatcherTimer();
 
         Rectangle[,] _pixels = new Rectangle[32, 32];
 
@@ -140,7 +140,7 @@ namespace Tetris
                     rect.Height = PIXEL_SIZE;
                     rect.Fill = new SolidColorBrush(Colors.Black);
 
-                    rect.Stroke = new SolidColorBrush(Colors.DarkRed);
+                    rect.Stroke = new SolidColorBrush(Colors.Black);
                     rect.StrokeThickness = 1;
 
                     Grid.SetRow(rect, i);
@@ -163,7 +163,7 @@ namespace Tetris
                 {
                     if ((_screenMemory[row] & bit) != 0)
                     {
-                        _pixels[row, col].Fill = new SolidColorBrush(Colors.Lime);
+                        _pixels[row, col].Fill = new SolidColorBrush(Color.FromRgb(0x00, 0x33, 0x66));
                     }
                     else
                     {

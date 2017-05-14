@@ -5,8 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Tetris"
         mc:Ignorable="d"
-        Title="MainWindow" Width="Auto" Height="Auto" >
-    <Grid x:Name="ScreenGrid" HorizontalAlignment="Center" VerticalAlignment="Center">
+        Title="MainWindow" Width="420" Height="430" >
+    <Grid x:Name="ScreenGrid" HorizontalAlignment="Center" Background="Black" VerticalAlignment="Center">
         
     </Grid>
 </Window>
