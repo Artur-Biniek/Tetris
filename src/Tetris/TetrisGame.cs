@@ -94,16 +94,15 @@ namespace Tetris
 
         private void createBoard()
         {
-            for (int i = 0; i < 32; i += 1)
+            int i = 0;
+
+            for (; i < BOARD_HEIGHT; i += 1)
             {
-                if (i < BOARD_HEIGHT)
-                {
-                    _board[i] = 0;
-                    _screenMemory[i + BOARD_VERTICAL_SHIFT] = 0x00200400;
-                }                
+                _board[i] = 0;
+                _screenMemory[i + BOARD_VERTICAL_SHIFT] = 0x00200400;
             }
 
-            _screenMemory[BOARD_VERTICAL_SHIFT + BOARD_HEIGHT] = 0x003FFC00;
+            _screenMemory[i + BOARD_VERTICAL_SHIFT] = 0x003FFC00;
         }
 
         private void generateTetromino()
