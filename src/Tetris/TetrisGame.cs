@@ -116,10 +116,7 @@ namespace Tetris
             _curRow = START_LOCATION_DATA[_curBlock + _curRotation];
             _curCol = 3;
 
-            if (!canMoveBlock(_curCol, _curRow, _curRotation))
-            {
-                _playing = false;
-            }
+            _playing = canMoveBlock(_curCol, _curRow, _curRotation);            
         }
 
         public void Run()
@@ -283,8 +280,8 @@ namespace Tetris
             int offset = 6;
             int shft = 0;
 
-            uint mem = 0u;
-            uint strip = 0u;
+            uint mem;
+            uint strip;
             uint block = BLOCKS_DATA[_curBlock + _curRotation];
             int i = 0;
 
@@ -350,8 +347,8 @@ namespace Tetris
             uint mask = 0xF000;
             int offset = 6;
 
-            uint mem = 0u;
-            uint strip = 0u;
+            uint mem;
+            uint strip;
             uint block = BLOCKS_DATA[_curBlock + rot];
 
             int i = 0;
